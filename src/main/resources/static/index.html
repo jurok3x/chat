@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Example</title>
+    <script src="/webjars/jquery/3.5.1/jquery.min.js"></script>
+    <script src="/webjars/sockjs-client/1.1.2/sockjs.min.js"></script>
+    <script src="/webjars/stomp-websocket/2.3.3/stomp.min.js"></script>
+    <script type="text/javascript">
+        var stompClient = null;
+
+        function connect() {
+            var socket = new SockJS('/chat-websocket');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                stompClient.subscribe('/topic/chat', function (chatMessage) {
+                    showMessage(JSON.parse(chatMessage.body));
+                });
+            });
+        }
+
+        function disconnect() {
+            if (stompClient !== null) {
+                stompClient.disconnect();
+            }
+            setConnected(false);
+        }
+
+        function showMessage(message) {
+            $("#chat").append("<tr><td>" + message.sender + ": " + message.content + "</td></tr>");
+        }
+
+        function sendMessage() {
+            stompClient.send("/app/chat", {}, JSON.stringify({
+                'content': $("#message").val(),
+                'sender': $("#username").val()
+            }));
+            $("#message").val("");
+        }
+
+        $(function () {
+            $("form").on('submit', function (e) {
+                e.preventDefault();
+            });
+            connect();
+            $("#connect").click(function() { connect(); });
+            $("#disconnect").click(function() { disconnect(); });
+            $("#send").click(function() { sendMessage(); });
+        });
+    </script>
+</head>
+<body>
+<div>
+    <label for="username">Username:</label>
+    <input type="text" id="username" />
+    <button id="connect">Connect</button>
+    <button id="disconnect">Disconnect</button>
+</div>
+<br />
+<div>
+    <table id="chat">
+        <tr><td>Chat log:</td></tr>
+    </table>
+</div>
+<br />
+<div>
+    <form>
+        <label for="message">Message:</label>
+        <input type="text" id="message" />
+        <button id="send">Send</button>
+    </form>
+</div>
+</body>
+</html>
