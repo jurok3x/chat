@@ -12,7 +12,7 @@
             var socket = new SockJS('/chat-websocket');
             stompClient = Stomp.over(socket);
             stompClient.connect({}, function (frame) {
-                stompClient.subscribe('/topic/chat', function (chatMessage) {
+                stompClient.subscribe('/app/chat', function (chatMessage) {
                     showMessage(JSON.parse(chatMessage.body));
                 });
             });
