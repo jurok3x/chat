@@ -1,6 +1,12 @@
 package com.example.chat.controller;
 
 import com.example.chat.entity.ChatMessage;
+import com.example.chat.entity.ChatSession;
+import com.example.chat.entity.SessionStatus;
+import com.example.chat.service.SessionService;
+
+import lombok.AllArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -20,9 +26,12 @@ import java.io.IOException;
 
 @Controller
 @MessageMapping("/chat")
+@AllArgsConstructor
 public class MessageController {
 
-    @MessageMapping("/chat/{roomId}/sendMessage")
+  private SessionService sessionService;
+
+  @MessageMapping("/chat/{roomId}/sendMessage")
   @SendTo("/topic/{roomId}")
   public ChatMessage sendMessage(@DestinationVariable String roomId, @Payload ChatMessage chatMessage) {
     // Send the chat message to the specified room
@@ -33,10 +42,10 @@ public class MessageController {
   @SendTo("/topic/{roomId}")
   public ChatMessage joinRoom(@DestinationVariable String roomId, @Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
     // Add the user to the room
-    headerAccessor.getSessionId();
+    String sessionId = headerAccessor.getSessionId();
     headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
     headerAccessor.getSessionAttributes().put("room_id", roomId);
-    //chatSessionRepository.save(new ChatSession(username, roomId, sessionId));
+    sessionService.save(new ChatSession(sessionId, chatMessage.getSender(), roomId, SessionStatus.ACTIVE));
     // Notify all clients in the room that a new user has joined
     return chatMessage;
   }
@@ -47,6 +56,9 @@ public class MessageController {
     // Remove the user from the room
     headerAccessor.getSessionAttributes().remove("username");
     headerAccessor.getSessionAttributes().remove("room_id");
+    ChatSession session = sessionService.findById(headerAccessor.getSessionId());
+    session.setStatus(SessionStatus.CLOSED);
+    sessionService.save(session);
 
     // Notify all clients in the room that a user has left
     return chatMessage;
