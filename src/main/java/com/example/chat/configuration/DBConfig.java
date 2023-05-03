@@ -13,7 +13,7 @@ public class DBConfig {
     
     @Value("${db.password}")
     private String password;
-    @Value("${db.username}")
+    @Value("${db.user}")
     private String username;
     @Value("${db.link}")
     private String link;

@@ -43,6 +43,7 @@ public class MessageController {
     String sessionId = headerAccessor.getSessionId();
     headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
     headerAccessor.getSessionAttributes().put("room_id", roomId);
+    System.out.println(chatMessage.getContent());
     sessionService.save(new ChatSession(sessionId, chatMessage.getSender(), roomId, SessionStatus.ACTIVE));
     // Notify all clients in the room that a new user has joined
     return chatMessage;
